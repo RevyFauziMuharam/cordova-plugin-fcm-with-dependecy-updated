@@ -14,6 +14,12 @@ import java.util.HashMap;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+
+// add revy
+import android.app.NotificationChannel;
+import android.app.Notification;
+import android.content.Intent;
+
 /**
  * Created by Felipe Echanique on 08/06/2016.
  */
@@ -33,30 +39,25 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // If the application is in the foreground handle both data and notification messages here.
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
-        Log.d(TAG, "==> MyFirebaseMessagingService onMessageReceived");
-        
-        if(remoteMessage.getNotification() != null){
-            Log.d(TAG, "\tNotification Title: " + remoteMessage.getNotification().getTitle());
-            Log.d(TAG, "\tNotification Message: " + remoteMessage.getNotification().getBody());
-        }
-        
-        Map<String, Object> data = new HashMap<String, Object>();
-        data.put("wasTapped", false);
-        
-        if(remoteMessage.getNotification() != null){
-            data.put("title", remoteMessage.getNotification().getTitle());
-            data.put("body", remoteMessage.getNotification().getBody());
-        }
+        Log.d(TAG, "==> MyFirebaseMessagingService onMessageReceived ENAK 1");
 
-        for (String key : remoteMessage.getData().keySet()) {
+		if( remoteMessage.getNotification() != null){
+			Log.d(TAG, "\tNotification Title: " + remoteMessage.getNotification().getTitle());
+			Log.d(TAG, "\tNotification Message: " + remoteMessage.getNotification().getBody());
+		}
+
+		Map<String, Object> data = new HashMap<String, Object>();
+		data.put("wasTapped", false);
+		for (String key : remoteMessage.getData().keySet()) {
                 Object value = remoteMessage.getData().get(key);
                 Log.d(TAG, "\tKey: " + key + " Value: " + value);
-                data.put(key, value);
+				data.put(key, value);
         }
-        
-        Log.d(TAG, "\tNotification Data: " + data.toString());
+
+		Log.d(TAG, "\tNotification Data: " + data.toString());
         FCMPlugin.sendPushPayload( data );
-        //sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody(), remoteMessage.getData());
+        // sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody(), data);
+        createNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody(), this);
     }
     // [END receive_message]
 
@@ -68,9 +69,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     private void sendNotification(String title, String messageBody, Map<String, Object> data) {
         Intent intent = new Intent(this, FCMPluginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        for (String key : data.keySet()) {
-            intent.putExtra(key, data.get(key).toString());
-        }
+		for (String key : data.keySet()) {
+			intent.putExtra(key, data.get(key).toString());
+		}
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
@@ -87,5 +88,59 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
+    }
+
+    private static final String default_channel_id = "1";
+    private static final String default_channel = "Jaga-Channel";
+    private NotificationManager notifManager;
+    public void createNotification(String aTitle, String aMessage, Context context) {
+        final int NOTIFY_ID = 0; // ID of notification
+        String id = default_channel_id; // default_channel_id
+        String title = default_channel; // Default Channel
+        Intent intent;
+        PendingIntent pendingIntent;
+        NotificationCompat.Builder builder;
+        if (notifManager == null) {
+            notifManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel mChannel = notifManager.getNotificationChannel(id);
+            if (mChannel == null) {
+                mChannel = new NotificationChannel(id, title, importance);
+                mChannel.enableVibration(true);
+                mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+                notifManager.createNotificationChannel(mChannel);
+            }
+            builder = new NotificationCompat.Builder(context, id);
+            intent = new Intent(context, FCMPluginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+            builder.setContentTitle(aTitle)                            // required
+                   .setContentText(aMessage)
+                   .setSmallIcon(getApplicationInfo().icon)   // required
+                   .setDefaults(Notification.DEFAULT_ALL)
+                   .setAutoCancel(true)
+                   .setContentIntent(pendingIntent)
+                   .setTicker(aMessage)
+                   .setVibrate(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+        }
+        else {
+            builder = new NotificationCompat.Builder(context, id);
+            intent = new Intent(context, FCMPluginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+            builder.setContentTitle(aTitle)                            // required
+                   .setContentText(aMessage)
+                   .setSmallIcon(getApplicationInfo().icon)   // required
+                   .setDefaults(Notification.DEFAULT_ALL)
+                   .setAutoCancel(true)
+                   .setContentIntent(pendingIntent)
+                   .setTicker(aMessage)
+                   .setVibrate(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400})
+                   .setPriority(Notification.PRIORITY_HIGH);
+        }
+        Notification notification = builder.build();
+        notifManager.notify(NOTIFY_ID, notification);
     }
 }
