@@ -1,6 +1,7 @@
+cordova.define("cordova-plugin-fcm-with-dependecy-updated.FCMPlugin", function(require, exports, module) {
 var exec = require('cordova/exec');
 
-function FCMPlugin() { 
+function FCMPlugin() {
 	console.log("FCMPlugin.js: is created");
 }
 
@@ -45,3 +46,5 @@ exec(function(result){ console.log("FCMPlugin Ready OK") }, function(result){ co
 
 var fcmPlugin = new FCMPlugin();
 module.exports = fcmPlugin;
+
+});

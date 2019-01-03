@@ -39,25 +39,25 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // If the application is in the foreground handle both data and notification messages here.
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
-        Log.d(TAG, "==> MyFirebaseMessagingService onMessageReceived ENAK 1");
+      Log.d(TAG, "==> MyFirebaseMessagingService onMessageReceived ENAK 1");
 
-		if( remoteMessage.getNotification() != null){
-			Log.d(TAG, "\tNotification Title: " + remoteMessage.getNotification().getTitle());
-			Log.d(TAG, "\tNotification Message: " + remoteMessage.getNotification().getBody());
-		}
+  		if( remoteMessage.getNotification() != null){
+  			Log.d(TAG, "\tNotification Title: " + remoteMessage.getNotification().getTitle());
+  			Log.d(TAG, "\tNotification Message: " + remoteMessage.getNotification().getBody());
+  		}
 
-		Map<String, Object> data = new HashMap<String, Object>();
-		data.put("wasTapped", false);
-		for (String key : remoteMessage.getData().keySet()) {
-                Object value = remoteMessage.getData().get(key);
-                Log.d(TAG, "\tKey: " + key + " Value: " + value);
-				data.put(key, value);
-        }
+  		Map<String, Object> data = new HashMap<String, Object>();
+  		data.put("wasTapped", false);
+  		for (String key : remoteMessage.getData().keySet()) {
+        String value = remoteMessage.getData().get(key);
+        Log.d(TAG, "\tKey: " + key + " Value: " + value);
+        data.put(key, value);
+      }
 
-		Log.d(TAG, "\tNotification Data: " + data.toString());
-        FCMPlugin.sendPushPayload( data );
-        // sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody(), data);
-        createNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody(), this);
+  		Log.d(TAG, "\tNotification Data: " + data.toString());
+      FCMPlugin.sendPushPayload( data );
+      // sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody(), data);
+      createNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody(), data, this);
     }
     // [END receive_message]
 
@@ -93,7 +93,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     private static final String default_channel_id = "1";
     private static final String default_channel = "Jaga-Channel";
     private NotificationManager notifManager;
-    public void createNotification(String aTitle, String aMessage, Context context) {
+    public void createNotification(String aTitle, String aMessage, Map<String, Object> data, Context context) {
         final int NOTIFY_ID = 0; // ID of notification
         String id = default_channel_id; // default_channel_id
         String title = default_channel; // Default Channel
@@ -114,6 +114,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             }
             builder = new NotificationCompat.Builder(context, id);
             intent = new Intent(context, FCMPluginActivity.class);
+            for (String key : data.keySet()) {
+        			intent.putExtra(key, data.get(key).toString());
+        		}
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
             builder.setContentTitle(aTitle)                            // required
@@ -128,6 +131,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         else {
             builder = new NotificationCompat.Builder(context, id);
             intent = new Intent(context, FCMPluginActivity.class);
+            for (String key : data.keySet()) {
+        			intent.putExtra(key, data.get(key).toString());
+        		}
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
             builder.setContentTitle(aTitle)                            // required
